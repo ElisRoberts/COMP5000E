@@ -38,7 +38,13 @@ customer_tb.drop_duplicates(subset=['customer_id'], inplace = True)
 
 ##get unique vendor categories
 
-unqiue_cat_vendors_tb = vendors_tb.drop_duplicates(subset=['vendor_category_id'])
+unique_cat_vendors_tb = vendors_tb.drop_duplicates(subset=['vendor_category_id'], keep = 'last')
+unique_orders_tb = orders_tb.drop_duplicates(subset = ['akeed_order_id'], keep = 'last')
+
+##Drops locations that have no longitude/latitude 
+
+location_lat_drop = location_tb.dropna(subset=['latitude', 'longitude'])
+orders_cleaned_drop = unique_orders_tb.dropna(subset=['item_count'])
 
 ## CREATE NEW TABLE THAT CONNCECTS LOCATION TO ORDER, USER_ID and LOCATIONNUM AS FK 
 
@@ -51,7 +57,11 @@ sql_name = "C://Users//ELISW//Desktop//COMP5000//Coursework//restaurant-delivery
 connection = sqlite3.connect(sql_name)
 cursor = connection.cursor()
 
-cursor.execute(""" DROP TABLE VENDOR""");
+cursor.execute(""" DROP TABLE IF EXISTS VENDOR;""")
+cursor.execute(""" DROP TABLE IF EXISTS CUSTOMERS;""")
+cursor.execute(""" DROP TABLE IF EXISTS VENDOR_CAT; """)
+cursor.execute(""" DROP TABLE IF EXISTS LOCATION; """)
+cursor.execute(""" DROP TABLE IF EXISTS ORDERS;""")
 
 create_customer = """
  CREATE TABLE IF NOT EXISTS CUSTOMERS(                         
@@ -84,7 +94,7 @@ create_vendor = """
      discount int NOT NULL,
      status int NOT NULL,
      verified int NOT NULL,
-     language varchr(3), 
+     language varchar(3), 
      vendor_rating float NOT NULL,
      primary_tags varchar(70),
      vendor_tag varchar(20),
@@ -103,13 +113,14 @@ create_vendorCat = """
  
 create_locations = """
  CREATE TABLE IF NOT EXISTS LOCATION(
-    location_id int PRIMARY KEY,
+    location_id int NOT NULL,
     customer_id varchar(7) NOT NULL,
     location_number int NOT NULL,
     location_type varchar(14),
     latitude float NOT NULL,
     longitude float NOT NULL,
     FOREIGN KEY(customer_id) REFERENCES CUSTOMERS(customer_id)
+    PRIMARY KEY (location_id, location_number)
     );
  """
  ##NOT 100% sure on how to do location, location ID is here for trial basis
@@ -121,26 +132,25 @@ create_orders = """
      grand_total float NOT NULL,
      payment_mode int NOT NULL,
      promo_code varchar(100),
-     vendor_discount_amount int NOT NULL,
+     vendor_discount_amount int,
      promo_code_discount_percent int,
      is_favourite varchar(3),
      is_rated varchar(3),
      vendor_rating int,
      driver_rating int,
-     devliery_distance int NOT NULL,
+     devliery_distance float NOT NULL,
      preperation_time int,
      order_accept_time varchar(24),
      driver_accept_time verchar(24),
-     ready_for_pickup_time varchar(24),
+     ready_for_pickup_time varchar(2.4),
      picked_up_time varchar(24),
      delivered_time varchar(24),
      delviery_date varchar(24),
      vendor_id int NOT NULL,
      created_at varchar(24) NOT NULL,
-     location_id int NOT NULL, 
+     location_number int NOT NULL, 
      FOREIGN KEY(customer_id) REFERENCES CUSTOMERS(customer_id),
      FOREIGN KEY(vendor_id) REFERENCES VENDOR(vendor_id)
-     FOREIGN KEY(location_id) REFERENCES LOCATION(location_id)
      );
 """
 
@@ -166,7 +176,7 @@ def populate_customer_func():
 
 def populate_vendor_cat_func():
      count = 0
-     for index, row in unqiue_cat_vendors_tb.iterrows():
+     for index, row in unique_cat_vendors_tb.iterrows():
          
          populate_vendor_cat = """ 
          INSERT INTO VENDOR_CAT(
@@ -212,12 +222,72 @@ def populate_vendor_func():
         cursor.execute(populate_vendors, populate_vendor_tuple)
         count +=1
                                                    
+def populate_location_fun():
+    count = 0
+    for index, row, in location_lat_drop.iterrows():
+        populate_location = """ 
+        INSERT INTO LOCATION(
+            location_id,
+            customer_id,
+            location_number,
+            location_type,
+            latitude,
+            longitude)
+        VALUES (?,?,?,?,?,?);"""
+        
+        populate_location_tuple = (count, row['customer_id'], row['location_number'],
+                                   row['location_type'], row['latitude'], row['longitude'])
+        cursor.execute(populate_location, populate_location_tuple)
+        count +=1
+        
+def populate_orders_fun():
+    count = 0
+    for index, row in orders_cleaned_drop.iterrows():
+        populate_orders = """
+    
+        INSERT INTO ORDERS(
+            order_id,
+            customer_id,
+            item_count,
+            grand_total,
+            payment_mode,
+            promo_code,
+            is_favourite,
+            is_rated,
+            vendor_rating,
+            driver_rating,
+            devliery_distance,
+            preperation_time,
+            order_accept_time,
+             driver_accept_time,
+             ready_for_pickup_time,
+             picked_up_time,
+             delivered_time,
+             delviery_date,
+             vendor_id,
+             created_at,
+             location_number)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"""
+        
+        populate_orders_tuple = (row['akeed_order_id'], row['customer_id'], row['item_count'], row['grand_total'], row['payment_mode'], row['promo_code'],
+                                 row['is_favorite'], row['is_rated'], row['vendor_rating'], row['driver_rating'], row['deliverydistance'], row['preparationtime'],
+                                 row['order_accepted_time'], row['driver_accepted_time'], row['ready_for_pickup_time'], row['picked_up_time' ], row['delivered_time'],
+                                 row['delivery_date'], row['vendor_id'], row['created_at'], row['LOCATION_NUMBER'])
+        cursor.execute(populate_orders, populate_orders_tuple)
+        count += 1
+    
+        
+
+        
 
 
+
+
+populate_vendor_cat_func()
 populate_vendor_func()
-#populate_customer_func()
-#populate_vendor_cat_func()
-
+populate_customer_func()
+populate_location_fun()
+populate_orders_fun()
 
 
 
