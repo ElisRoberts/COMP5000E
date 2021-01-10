@@ -10,6 +10,9 @@ from tkinter import *
 import sqlite3
 import uuid
 from datetime import datetime
+import pandas as pd
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 ##CHOOSE HERE WHERE THE DB FILE IS READ FROM OR CREATED IF IT DOESNT EXIST
 
 sql_name = "C://Users//ELISW//Desktop//COMP5000//Coursework//restaurant-delivery.db"
@@ -132,8 +135,28 @@ def mean_window():
     home_btn = Button(mean_win, text = "Back", command=mean_win.destroy , font = ('Ariel', 10), width = 5, anchor = "c")
     home_btn.grid(row=5, column = 1)
     
+def hist_window():
+    hist_win = Toplevel()
+    hist_win.title("Histogram")
+    hist_win.geometry("500x500")
         
+    connection = sqlite3.connect(sql_name)
+    cursor= connection.cursor()
     
+    #cursor.execute("""SELECT devliery_distance, count(devliery_distance) FROM ORDERS GROUP BY devliery_distance""")
+    sql_query = ("""SELECT devliery_distance FROM ORDERS GROUP BY devliery_distance""")
+
+    df = pd.read_sql(sql_query, connection)
+    connection.commit()
+    connection.close()
+    df =  df.hist(bins = 10)
+    
+    area = tk.LabelFrame(hist_win, text = "Plot Area").pack()
+    
+    canvas = FigureCanvasTkAgg(df, master = area)
+    canvas.show()
+    canvas.get_tk_widget().pack()
+
 
 Home = tk.Tk()
 Home.geometry("400x250")
@@ -151,7 +174,7 @@ new_user_btn.grid(row=2,column=1,columnspan=1)
 print_means_btn = Button(Home, text = "Show Means", command = mean_window, font = ('Ariel', 20), width = 20)
 print_means_btn.grid(row=3,column=1,columnspan=1)
     
-plot_hist_btn = Button(Home, text = "Plot Histogram", font = ('Ariel', 20), width = 20)
+plot_hist_btn = Button(Home, text = "Plot Histogram",command = hist_window ,font = ('Ariel', 20), width = 20)
 plot_hist_btn.grid(row=4,column=1,columnspan=1)
 
     
