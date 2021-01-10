@@ -8,7 +8,6 @@ Created on Sat Jan  9 16:32:54 2021
 import tkinter as tk
 from tkinter import *
 import sqlite3
-import pandas as pd
 import uuid
 from datetime import datetime
 ##CHOOSE HERE WHERE THE DB FILE IS READ FROM OR CREATED IF IT DOESNT EXIST
@@ -50,6 +49,8 @@ def save_user():
        cursor.execute(add_data, add_data_tupple)    
        connection.commit()
        connection.close()
+       
+       
        saved = Toplevel()
        saved.title("User Saved")
        saved.geometry("100x50")
@@ -101,6 +102,36 @@ def add_user_window():
         home_btn = Button(add_user, text = "Back", command=add_user.destroy , font = ('Ariel', 10), width = 5, anchor = "w")
         home_btn.grid(row=3, column = 0)
         
+def mean_window():
+    item_mean = StringVar()
+    cost_mean = StringVar()
+    mean_win = Toplevel()
+    mean_win.title("Means")
+    mean_win.geometry("400x150")
+    
+    connection = sqlite3.connect(sql_name)
+    cursor= connection.cursor()
+    
+    cursor.execute("""SELECT AVG(item_count) FROM ORDERS""")
+    item_mean = cursor.fetchone()
+    
+    cursor.execute("""SELECT AVG(grand_total) FROM ORDERS""")
+    cost_mean = cursor.fetchone()
+    connection.commit()
+    connection.close()
+
+    
+    
+
+    l_item = tk.Label(mean_win, text = "The mean of number of items purchesed: " , font = ('Ariel', 12), width = 40, anchor = "c").grid(row=1,column=1)
+    l_item_out = tk.Label(mean_win, text = item_mean, font = ('Ariel', 12), width = 40, anchor = "c").grid(row=2,column=1)
+    
+    l_total = tk.Label(mean_win, text = "The mean of number of grand total cost: " , font = ('Ariel', 12), width = 40, anchor = "c").grid(row=3,column=1)
+    l_total_out = tk.Label(mean_win, text = cost_mean,  font = ('Ariel', 12), width = 40, anchor = "c").grid(row=4,column=1)
+    
+    home_btn = Button(mean_win, text = "Back", command=mean_win.destroy , font = ('Ariel', 10), width = 5, anchor = "c")
+    home_btn.grid(row=5, column = 1)
+    
         
     
 
@@ -117,7 +148,7 @@ new_user_btn.grid(row=2,column=1,columnspan=1)
     
     
     
-print_means_btn = Button(Home, text = "Show Means", font = ('Ariel', 20), width = 20)
+print_means_btn = Button(Home, text = "Show Means", command = mean_window, font = ('Ariel', 20), width = 20)
 print_means_btn.grid(row=3,column=1,columnspan=1)
     
 plot_hist_btn = Button(Home, text = "Plot Histogram", font = ('Ariel', 20), width = 20)
