@@ -46,23 +46,24 @@ unique_orders_tb = orders_tb.drop_duplicates(subset = ['akeed_order_id'], keep =
 location_lat_drop = location_tb.dropna(subset=['latitude', 'longitude'])
 orders_cleaned_drop = unique_orders_tb.dropna(subset=['item_count'])
 
-## CREATE NEW TABLE THAT CONNCECTS LOCATION TO ORDER, USER_ID and LOCATIONNUM AS FK 
-
-
-
-
 ##CHOOSE HERE WHERE THE DB FILE IS READ FROM OR CREATED IF IT DOESNT EXIST
 sql_name = "C://Users//ELISW//Desktop//COMP5000//Coursework//restaurant-delivery.db"
 
+
+#Sets connections 
 connection = sqlite3.connect(sql_name)
 cursor = connection.cursor()
 
+
+# Drops existing tables
 cursor.execute(""" DROP TABLE IF EXISTS VENDOR;""")
 cursor.execute(""" DROP TABLE IF EXISTS CUSTOMERS;""")
 cursor.execute(""" DROP TABLE IF EXISTS VENDOR_CAT; """)
 cursor.execute(""" DROP TABLE IF EXISTS LOCATION; """)
 cursor.execute(""" DROP TABLE IF EXISTS ORDERS;""")
 
+
+#Create Customer table
 create_customer = """
  CREATE TABLE IF NOT EXISTS CUSTOMERS(                         
     customer_id varchar(7) PRIMARY KEY,
@@ -77,7 +78,7 @@ create_customer = """
 """
 
 ## got rid of, cityid, countryid, one_click, device_type, display_orders,commision rank redundent and all the same
-## could come back to vendor_tags
+## Create vendor table
 create_vendor = """
  CREATE TABLE IF NOT EXISTS VENDOR(
      vendor_id int PRIMARY KEY,
@@ -104,13 +105,15 @@ create_vendor = """
      FOREIGN KEY(vendor_category_id) REFERENCES VENDOR_CAT(vendor_category_id)
      );
  """
+ 
+#Create VendorCat table
 create_vendorCat = """
  CREATE TABLE IF NOT EXISTS VENDOR_CAT(
      vendor_category_id int PRIMARY KEY,
      vendor_category varchar(50)
      );
  """
- 
+ #Create locatios table
 create_locations = """
  CREATE TABLE IF NOT EXISTS LOCATION(
     location_id int NOT NULL,
@@ -123,7 +126,8 @@ create_locations = """
     PRIMARY KEY (location_id, location_number)
     );
  """
- ##NOT 100% sure on how to do location, location ID is here for trial basis
+ 
+ #Create order table
 create_orders = """
  CREATE TABLE IF NOT EXISTS ORDERS(
      order_id int PRIMARY KEY,
@@ -142,7 +146,7 @@ create_orders = """
      preperation_time int,
      order_accept_time varchar(24),
      driver_accept_time verchar(24),
-     ready_for_pickup_time varchar(2.4),
+     ready_for_pickup_time varchar(24),
      picked_up_time varchar(24),
      delivered_time varchar(24),
      delviery_date varchar(24),
@@ -154,16 +158,18 @@ create_orders = """
      );
 """
 
-
+#Runs the actual code to create the tables
 cursor.execute(create_customer)
-cursor.execute(create_vendor)
 cursor.execute(create_vendorCat)
+cursor.execute(create_vendor)
 cursor.execute(create_locations)
 cursor.execute(create_orders)
 
+
+##Populates the customer table
 def populate_customer_func():
     count = 0
-    for index, row in customer_tb.iterrows():
+    for index, row in customer_tb.iterrows(): #Goes through each line in the cvs and adds in the relevent information
         
         populate_customer = """
         INSERT INTO CUSTOMERS(
@@ -174,6 +180,7 @@ def populate_customer_func():
         cursor.execute(populate_customer, populate_customer_tuple)
         count += 1
 
+#Populates the vendor_cat
 def populate_vendor_cat_func():
      count = 0
      for index, row in unique_cat_vendors_tb.iterrows():
@@ -186,6 +193,7 @@ def populate_vendor_cat_func():
          cursor.execute(populate_vendor_cat, populate_vendor_cat_tuple)
          count +=1
 
+#populates the vendor table
 def populate_vendor_func():
     count = 0
     for index, row, in vendors_tb.iterrows():
@@ -221,7 +229,8 @@ def populate_vendor_func():
                                 row['created_at'],row['updated_at'])
         cursor.execute(populate_vendors, populate_vendor_tuple)
         count +=1
-                                                   
+                   
+#populates the location table                                
 def populate_location_fun():
     count = 0
     for index, row, in location_lat_drop.iterrows():
@@ -239,7 +248,8 @@ def populate_location_fun():
                                    row['location_type'], row['latitude'], row['longitude'])
         cursor.execute(populate_location, populate_location_tuple)
         count +=1
-        
+    
+    #Populates the order table
 def populate_orders_fun():
     count = 0
     for index, row in orders_cleaned_drop.iterrows():
@@ -276,13 +286,8 @@ def populate_orders_fun():
         cursor.execute(populate_orders, populate_orders_tuple)
         count += 1
     
-        
 
-        
-
-
-
-
+#runs the functions to populate the tables
 populate_vendor_cat_func()
 populate_vendor_func()
 populate_customer_func()
@@ -290,6 +295,6 @@ populate_location_fun()
 populate_orders_fun()
 
 
-
+#Ends connection with the database
 connection.commit()
 connection.close()
