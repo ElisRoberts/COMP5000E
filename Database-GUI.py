@@ -13,10 +13,8 @@ from datetime import datetime
 import pandas as pd
 import matplotlib
 matplotlib.use("TkAgg")
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-import numpy as np
+
 ##CHOOSE HERE WHERE THE DB FILE IS READ FROM OR CREATED IF IT DOESNT EXIST
 
 sql_name = "C://Users//ELISW//Desktop//COMP5000//Coursework//restaurant-delivery.db"
@@ -137,7 +135,7 @@ def hist_window():
     cursor= connection.cursor()
     
     #cursor.execute("""SELECT devliery_distance, count(devliery_distance) FROM ORDERS GROUP BY devliery_distance""")
-    sql_query = ("""SELECT devliery_distance FROM ORDERS GROUP BY devliery_distance""")
+    sql_query = ("""SELECT devliery_distance FROM ORDERS""")
 
     df = pd.read_sql(sql_query, connection)
     connection.commit()
@@ -145,7 +143,7 @@ def hist_window():
     
     
  
-    df = df.hist(bins = 20)
+    df = df.hist(bins = 20, ylim=(0,1))
     
     f = Figure(figsize=()(5,5), dpi= 100)
     a = f.add_subplot(111)
