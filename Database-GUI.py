@@ -11,8 +11,12 @@ import sqlite3
 import uuid
 from datetime import datetime
 import pandas as pd
+import matplotlib
+matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+import numpy as np
 ##CHOOSE HERE WHERE THE DB FILE IS READ FROM OR CREATED IF IT DOESNT EXIST
 
 sql_name = "C://Users//ELISW//Desktop//COMP5000//Coursework//restaurant-delivery.db"
@@ -24,14 +28,6 @@ cursor = connection.cursor()
 connection.commit()
 connection.close()
 
-#Creates new window for adding new user
-# def save_user():
-#     connection = sqlite3.connect(sql_name)
-#     cursor= connection.cursor()
-#     cursor.execute("insert into CUSTOMERS('%s', '%s','%s','%s','%s','%s' )"%(user_id.get(),
-#                                                                              gender_var.get(),
-#                                                                              dob.get(),
-                                               #  status.get(),
      #Creates new window for adding new user
 def save_user():
     
@@ -136,10 +132,7 @@ def mean_window():
     home_btn.grid(row=5, column = 1)
     
 def hist_window():
-    hist_win = Toplevel()
-    hist_win.title("Histogram")
-    hist_win.geometry("500x500")
-        
+
     connection = sqlite3.connect(sql_name)
     cursor= connection.cursor()
     
@@ -149,13 +142,16 @@ def hist_window():
     df = pd.read_sql(sql_query, connection)
     connection.commit()
     connection.close()
-    df =  df.hist(bins = 10)
     
-    area = tk.LabelFrame(hist_win, text = "Plot Area").pack()
     
-    canvas = FigureCanvasTkAgg(df, master = area)
-    canvas.show()
-    canvas.get_tk_widget().pack()
+ 
+    df = df.hist(bins = 20)
+    
+    f = Figure(figsize=()(5,5), dpi= 100)
+    a = f.add_subplot(111)
+    
+    a.Plot(df)
+    
 
 
 Home = tk.Tk()
